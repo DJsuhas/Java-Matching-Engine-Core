@@ -3,6 +3,7 @@ package net.laffyco.javamatchingengine.core.engine;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.springframework.stereotype.Component;
 
@@ -31,11 +32,32 @@ public class OrderBook {
     private double lastSalePrice;
 
     /**
+     * Logger.
+     */
+    private static final Logger logger = Logger.getLogger(OrderBook.class.getName());
+
+    /**
      * Constructor.
      */
     public OrderBook() {
         this.buyOrders = new ArrayList<>();
         this.sellOrders = new ArrayList<>();
+    }
+
+    /**
+     * Place an order with validation.
+     *
+     * @param order the order to place
+     * @return the trades generated
+     */
+    public List<Trade> placeOrder(final Order order) {
+        if (order == null) {
+            throw new IllegalArgumentException("Order cannot be null");
+        }
+        if (order.getAmount() <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+        return this.process(order);
     }
 
     /**
@@ -79,6 +101,7 @@ public class OrderBook {
                     if (sellOrder.getAmount() >= order.getAmount()) {
                         trades.add(new Trade(order.getId(), sellOrder.getId(),
                                 order.getAmount(), sellOrder.getPrice()));
+                        logger.info("Trade Executed: " + order.getAmount() + " @ " + sellOrder.getPrice());
                         sellOrder.setAmount(
                                 sellOrder.getAmount() - order.getAmount());
                         if (sellOrder.getAmount() == 0) {
@@ -92,6 +115,7 @@ public class OrderBook {
                     if (sellOrder.getAmount() < order.getAmount()) {
                         trades.add(new Trade(order.getId(), sellOrder.getId(),
                                 sellOrder.getAmount(), sellOrder.getPrice()));
+                        logger.info("Trade Executed: " + sellOrder.getAmount() + " @ " + sellOrder.getPrice());
                         order.setAmount(
                                 order.getAmount() - sellOrder.getAmount());
                         this.removeSellOrder(0);
@@ -140,6 +164,7 @@ public class OrderBook {
                 if (buyOrder.getAmount() >= order.getAmount()) {
                     trades.add(new Trade(order.getId(), buyOrder.getId(),
                             order.getAmount(), buyOrder.getPrice()));
+                    logger.info("Trade Executed: " + order.getAmount() + " @ " + buyOrder.getPrice());
                     buyOrder.setAmount(
                             buyOrder.getAmount() - order.getAmount());
                     if (buyOrder.getAmount() == 0) {
@@ -153,6 +178,7 @@ public class OrderBook {
                 if (buyOrder.getAmount() < order.getAmount()) {
                     trades.add(new Trade(order.getId(), buyOrder.getId(),
                             buyOrder.getAmount(), buyOrder.getPrice()));
+                    logger.info("Trade Executed: " + buyOrder.getAmount() + " @ " + buyOrder.getPrice());
                     order.setAmount(order.getAmount() - buyOrder.getAmount());
                     this.removeBuyOrder(0);
                     this.setLastSalePrice(buyOrder.getPrice());
