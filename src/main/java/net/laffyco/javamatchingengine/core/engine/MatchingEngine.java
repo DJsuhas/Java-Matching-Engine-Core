@@ -3,6 +3,7 @@ package net.laffyco.javamatchingengine.core.engine;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.logging.Logger;
 
 import org.springframework.stereotype.Component;
@@ -17,14 +18,14 @@ import org.springframework.stereotype.Component;
 public class MatchingEngine {
 
     /**
-     * List of asking buy orders.
+     * Set of asking buy orders. Thread-safe sorted set with highest price first.
      */
-    private List<Order> buyOrders;
+    private ConcurrentSkipListSet<Order> buyOrders;
 
     /**
-     * List of asking sell orders.
+     * Set of asking sell orders. Thread-safe sorted set with lowest price first.
      */
-    private List<Order> sellOrders;
+    private ConcurrentSkipListSet<Order> sellOrders;
 
     /**
      * Last sale price.
@@ -37,20 +38,20 @@ public class MatchingEngine {
     private static final Logger logger = Logger.getLogger(MatchingEngine.class.getName());
 
     /**
-     * Constructor.
+     * Constructor. Initializes thread-safe sorted sets for orders.
      */
     public MatchingEngine() {
-        this.buyOrders = new ArrayList<>();
-        this.sellOrders = new ArrayList<>();
+        this.buyOrders = new ConcurrentSkipListSet<>();
+        this.sellOrders = new ConcurrentSkipListSet<>();
     }
 
     /**
-     * Place an order with validation.
+     * Place an order with validation. Thread-safe.
      *
      * @param order the order to place
      * @return the trades generated
      */
-    public List<Trade> placeOrder(final Order order) {
+    public synchronized List<Trade> placeOrder(final Order order) {
         if (order == null) {
             throw new IllegalArgumentException("Order cannot be null");
         }
@@ -89,11 +90,11 @@ public class MatchingEngine {
         // Check if order book is empty.
         if (n != 0) {
             // Check if at least one matching order.
-            if (this.sellOrders.get(n - 1).getPrice() <= order.getPrice()) {
+            if (this.sellOrders.last().getPrice() <= order.getPrice()) {
 
                 // Traverse matching orders
-                while (true) {
-                    final Order sellOrder = this.sellOrders.get(0);
+                while (!this.sellOrders.isEmpty()) {
+                    final Order sellOrder = this.sellOrders.first();
                     if (sellOrder.getPrice() > order.getPrice()) {
                         break;
                     }
@@ -105,7 +106,7 @@ public class MatchingEngine {
                         sellOrder.setAmount(
                                 sellOrder.getAmount() - order.getAmount());
                         if (sellOrder.getAmount() == 0) {
-                            this.removeSellOrder(0);
+                            this.sellOrders.pollFirst();
                         }
                         this.setLastSalePrice(sellOrder.getPrice());
                         return trades;
@@ -118,7 +119,7 @@ public class MatchingEngine {
                         logger.info("Trade Executed: " + sellOrder.getAmount() + " @ " + sellOrder.getPrice());
                         order.setAmount(
                                 order.getAmount() - sellOrder.getAmount());
-                        this.removeSellOrder(0);
+                        this.sellOrders.pollFirst();
                         this.setLastSalePrice(sellOrder.getPrice());
                         continue;
                     }
@@ -128,8 +129,6 @@ public class MatchingEngine {
 
         // Add remaining order to book.
         this.buyOrders.add(order);
-
-        Collections.sort(this.buyOrders);
 
         return trades;
     }
@@ -151,14 +150,14 @@ public class MatchingEngine {
         if (n == 0) {
             currentPrice = -1;
         } else {
-            currentPrice = this.buyOrders.get(n - 1).getPrice();
+            currentPrice = this.buyOrders.last().getPrice();
         }
 
         // Check that there is at least one matching order.
-        if (n != 0 || currentPrice >= order.getPrice()) {
+        if (n != 0 && currentPrice >= order.getPrice()) {
             // Traverse all matching orders.
-            for (int i = 0; i >= 0; i++) {
-                final Order buyOrder = this.buyOrders.get(0);
+            while (!this.buyOrders.isEmpty()) {
+                final Order buyOrder = this.buyOrders.first();
 
                 // Fill entire order.
                 if (buyOrder.getAmount() >= order.getAmount()) {
@@ -168,7 +167,7 @@ public class MatchingEngine {
                     buyOrder.setAmount(
                             buyOrder.getAmount() - order.getAmount());
                     if (buyOrder.getAmount() == 0) {
-                        this.removeBuyOrder(0);
+                        this.buyOrders.pollFirst();
                     }
                     this.setLastSalePrice(buyOrder.getPrice());
                     return trades;
@@ -180,7 +179,7 @@ public class MatchingEngine {
                             buyOrder.getAmount(), buyOrder.getPrice()));
                     logger.info("Trade Executed: " + buyOrder.getAmount() + " @ " + buyOrder.getPrice());
                     order.setAmount(order.getAmount() - buyOrder.getAmount());
-                    this.removeBuyOrder(0);
+                    this.buyOrders.pollFirst();
                     this.setLastSalePrice(buyOrder.getPrice());
                     continue;
                 }
@@ -188,8 +187,6 @@ public class MatchingEngine {
         }
         // Add remaining order to the list.
         this.sellOrders.add(order);
-
-        Collections.sort(this.sellOrders);
 
         return trades;
     }
@@ -202,10 +199,9 @@ public class MatchingEngine {
     public double getSpread() {
 
         if (this.buyOrders.size() != 0 && this.sellOrders.size() != 0) {
-            final double buyOrderPrice = this.buyOrders
-                    .get(this.buyOrders.size() - 1).getPrice();
+            final double buyOrderPrice = this.buyOrders.last().getPrice();
 
-            final double sellOrderPrice = this.sellOrders.get(0).getPrice();
+            final double sellOrderPrice = this.sellOrders.first().getPrice();
 
             return sellOrderPrice - buyOrderPrice;
         }
@@ -258,12 +254,11 @@ public class MatchingEngine {
      * @return whether an order has been cancelled
      */
     private synchronized boolean cancel(final String orderId,
-            final List<Order> orderBook) {
+            final ConcurrentSkipListSet<Order> orderBook) {
         // Loop through order book to find order.
-        for (int i = 0; i < orderBook.size(); i++) {
-            final Order currentOrder = orderBook.get(i);
-            if (currentOrder.getId().equals(orderId)) {
-                orderBook.remove(i);
+        for (Order order : orderBook) {
+            if (order.getId().equals(orderId)) {
+                orderBook.remove(order);
                 return true; // Order cancelled.
             }
         }
@@ -271,49 +266,33 @@ public class MatchingEngine {
     }
 
     /**
-     * Remove a buy order from the order book.
-     *
-     * @param index
-     */
-    private synchronized void removeBuyOrder(final int index) {
-        this.buyOrders.remove(index);
-    }
-
-    /**
-     * Remove a sell order from the order book.
-     *
-     * @param index
-     */
-    private synchronized void removeSellOrder(final int index) {
-        this.sellOrders.remove(index);
-    }
-
-    /**
      * @return the buyOrders
      */
     public synchronized List<Order> getBuyOrders() {
-        return this.buyOrders;
+        return new ArrayList<>(this.buyOrders);
     }
 
     /**
      * @param pBuyOrders the buyOrders to set
      */
     public synchronized void setBuyOrders(final ArrayList<Order> pBuyOrders) {
-        this.buyOrders = pBuyOrders;
+        this.buyOrders.clear();
+        this.buyOrders.addAll(pBuyOrders);
     }
 
     /**
      * @return the sellOrders
      */
     public synchronized List<Order> getSellOrders() {
-        return this.sellOrders;
+        return new ArrayList<>(this.sellOrders);
     }
 
     /**
      * @param pSellOrders the sellOrders to set
      */
     public synchronized void setSellOrders(final ArrayList<Order> pSellOrders) {
-        this.sellOrders = pSellOrders;
+        this.sellOrders.clear();
+        this.sellOrders.addAll(pSellOrders);
     }
 
     /**
