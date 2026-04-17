@@ -1,41 +1,33 @@
-# Java-Matching-Engine-Core
+# Trading Order Matching Engine
 
-![Java CI with Maven](https://github.com/Laffini/Java-Matching-Engine-Core/workflows/Java%20CI%20with%20Maven/badge.svg)
+## Overview
+A Java-based trading order matching engine that simulates real-world stock exchange behavior using price-time priority.
 
-A matching engine written in Java.
+## Features
+- Buy/Sell order matching
+- Partial order execution
+- Thread-safe processing using PriorityBlockingQueue
+- REST API using Spring Boot
+- Logging and error handling
 
-## What is a matching engine?
-A matching engine matches buy and sell orders in a market.
+## Tech Stack
+- Java
+- Spring Boot
+- Data Structures (Heap / Priority Queue)
+- Multithreading (Concurrency)
 
-## Matching Algorithm
-The matching engine uses a price-time-priority algorithm.
- The matching priority is firstly price, then time.
- Market participants are rewarded for offering the best price and coming early. 
+## API Endpoint
+POST /api/orders
 
-## Usage
-The Java-Matching-Engine is broken up into multiple projects.
-This is the 'core' project.
- This project only contains the engine (no REST API, persistence, etc).
-
-To use this project, you will need to include the 'core' package as part of your Spring configuration scanning (as seen below).
-```
-@SpringBootApplication(scanBasePackages = "net.laffyco.javamatchingengine.core")
-public class ExampleApp {
-
-    @Autowired
-    private IOrderInterface orderInterface
-
-    public static void main(final String[] args) {
-        SpringApplication.run(ExampleApp.class, args);
-        System.out.println(this.orderInterface.getOrders());
-    }
-
+Sample Request:
+{
+  "id": "1",
+  "price": 100,
+  "quantity": 10,
+  "type": "BUY"
 }
 
-```
-
-In the example above, we are interacting with the order book through the OrderInterface. 
-The example starts and prints the orders to the console (it will be empty as no orders have been added).
-In most cases you will want to use some of the other Java-Matching-Engine projects as these add additional functionality (such as a REST API) that may suit your needs.
-
-It is recommended that every user of this service audits and verifies all underlying code for its validity and suitability. Mistakes and bugs happen.
+## Future Improvements
+- WebSocket real-time updates
+- Database integration
+- UI dashboard
