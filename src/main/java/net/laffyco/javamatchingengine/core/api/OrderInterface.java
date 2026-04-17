@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import net.laffyco.javamatchingengine.core.engine.Order;
-import net.laffyco.javamatchingengine.core.engine.OrderBook;
+import net.laffyco.javamatchingengine.core.engine.MatchingEngine;
 import net.laffyco.javamatchingengine.core.engine.Side;
 import net.laffyco.javamatchingengine.core.engine.Trade;
 import net.laffyco.javamatchingengine.core.events.OrderAddedEvent;
@@ -26,10 +26,10 @@ import net.laffyco.javamatchingengine.core.events.OrderMatchedEvent;
 public class OrderInterface implements IOrderInterface {
 
     /**
-     * Order book.
+     * Matching engine.
      */
     @Autowired
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     /**
      * Event publisher.
@@ -40,8 +40,8 @@ public class OrderInterface implements IOrderInterface {
     @Override
     public final Map<String, List<Order>> getOrders() {
         final Map<String, List<Order>> response = new HashMap<>();
-        response.put("buy", this.orderBook.getBuyOrders());
-        response.put("sell", this.orderBook.getSellOrders());
+        response.put("buy", this.matchingEngine.getBuyOrders());
+        response.put("sell", this.matchingEngine.getSellOrders());
         return response;
     }
 
@@ -49,7 +49,7 @@ public class OrderInterface implements IOrderInterface {
     public final Map<String, Order> getOrder(final String id, final Side side) {
         final Map<String, Order> response = new HashMap<>();
 
-        response.put("order", this.orderBook.findOrder(id, side));
+        response.put("order", this.matchingEngine.findOrder(id, side));
 
         return response;
     }
@@ -62,7 +62,7 @@ public class OrderInterface implements IOrderInterface {
         final Order order = new Order.Builder(side).withAmount(amount)
                 .atPrice(price).build();
 
-        final List<Trade> trades = this.orderBook.process(order);
+        final List<Trade> trades = this.matchingEngine.placeOrder(order);
 
         response.put("id", order.getId());
         response.put("trades", trades);
@@ -82,7 +82,7 @@ public class OrderInterface implements IOrderInterface {
             final Side side) {
         final Map<String, Object> response = new HashMap<>();
 
-        final boolean result = this.orderBook.cancelOrder(id, side);
+        final boolean result = this.matchingEngine.cancelOrder(id, side);
 
         response.put("order_deleted", result);
 
@@ -98,7 +98,7 @@ public class OrderInterface implements IOrderInterface {
 
         boolean isUpdated = false;
 
-        final Order toUpdate = this.orderBook.findOrder(id, side);
+        final Order toUpdate = this.matchingEngine.findOrder(id, side);
 
         if (newAmount.isPresent()) {
             // Update amount.

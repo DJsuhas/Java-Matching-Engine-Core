@@ -9,7 +9,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import net.laffyco.javamatchingengine.core.engine.Order;
-import net.laffyco.javamatchingengine.core.engine.OrderBook;
+import net.laffyco.javamatchingengine.core.engine.MatchingEngine;
 import net.laffyco.javamatchingengine.core.engine.Side;
 
 /**
@@ -20,9 +20,9 @@ import net.laffyco.javamatchingengine.core.engine.Side;
 public class OrdersSteps {
 
     /**
-     * Order book instance.
+     * Matching engine instance.
      */
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     /**
      * Order to add to order book.
@@ -34,7 +34,7 @@ public class OrdersSteps {
      */
     @Given("There is an instance of the order book")
     public void createOrderBook() {
-        this.orderBook = new OrderBook();
+        this.matchingEngine = new MatchingEngine();
     }
 
     /**
@@ -48,7 +48,7 @@ public class OrdersSteps {
 
         this.order = new Order.Builder(side).withAmount(amount).atPrice(price)
                 .build();
-        this.orderBook.process(this.order);
+        this.matchingEngine.process(this.order);
     }
 
     /**
@@ -56,12 +56,12 @@ public class OrdersSteps {
      */
     @Then("It is added to the order book")
     public void orderIsAdded() {
-        final List<Order> buyOrders = this.orderBook.getBuyOrders();
+        final List<Order> buyOrders = this.matchingEngine.getBuyOrders();
 
         // Assert there is only one order.
         final int oneOrder = 1;
         assertEquals(oneOrder, buyOrders.size());
-        assertTrue(this.orderBook.getSellOrders().isEmpty());
+        assertTrue(this.matchingEngine.getSellOrders().isEmpty());
 
         // Assert orders are equal match.
         final Order addedOrder = buyOrders.get(0);

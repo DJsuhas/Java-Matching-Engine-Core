@@ -20,14 +20,14 @@ public abstract class MatchingEngineTest {
     }
 
     /**
-     * Add an array of orders to the order book.
+     * Add an array of orders to the matching engine.
      *
-     * @param orderBook
+     * @param matchingEngine
      * @param orders
      */
-    public void addOrders(final OrderBook orderBook, final Order[] orders) {
+    public void addOrders(final MatchingEngine matchingEngine, final Order[] orders) {
         for (int i = 0; i < orders.length; i++) {
-            orderBook.process(orders[i]);
+            matchingEngine.placeOrder(orders[i]);
         }
 
     }

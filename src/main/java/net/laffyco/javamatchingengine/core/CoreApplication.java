@@ -1,5 +1,6 @@
 package net.laffyco.javamatchingengine.core;
 
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
@@ -17,9 +18,7 @@ public class CoreApplication {
      * @param args
      */
     public static void main(final String[] args) {
-        /*
-         * Intentionally left blank.
-         */
+        SpringApplication.run(CoreApplication.class, args);
     }
 
 }

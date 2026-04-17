@@ -8,13 +8,13 @@ import java.util.logging.Logger;
 import org.springframework.stereotype.Component;
 
 /**
- * The order book.
+ * The matching engine.
  *
  * @author Laffini
  *
  */
 @Component
-public class OrderBook {
+public class MatchingEngine {
 
     /**
      * List of asking buy orders.
@@ -34,12 +34,12 @@ public class OrderBook {
     /**
      * Logger.
      */
-    private static final Logger logger = Logger.getLogger(OrderBook.class.getName());
+    private static final Logger logger = Logger.getLogger(MatchingEngine.class.getName());
 
     /**
      * Constructor.
      */
-    public OrderBook() {
+    public MatchingEngine() {
         this.buyOrders = new ArrayList<>();
         this.sellOrders = new ArrayList<>();
     }

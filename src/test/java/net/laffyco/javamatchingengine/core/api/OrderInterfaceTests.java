@@ -21,7 +21,7 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 
 import net.laffyco.javamatchingengine.core.engine.Order;
-import net.laffyco.javamatchingengine.core.engine.OrderBook;
+import net.laffyco.javamatchingengine.core.engine.MatchingEngine;
 import net.laffyco.javamatchingengine.core.engine.Side;
 import net.laffyco.javamatchingengine.core.engine.Trade;
 import net.laffyco.javamatchingengine.core.events.OrderAddedEvent;
@@ -37,10 +37,10 @@ import test.utils.AbstractTest;
 public class OrderInterfaceTests extends AbstractTest {
 
     /**
-     * Mock order book.
+     * Mock matching engine.
      */
     @Mock
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     /**
      * Event publisher.
@@ -86,7 +86,7 @@ public class OrderInterfaceTests extends AbstractTest {
 
     @Override
     public final void init() {
-        Mockito.when(this.orderBook.findOrder(this.id, this.side))
+        Mockito.when(this.matchingEngine.findOrder(this.id, this.side))
                 .thenReturn(this.mockOrder);
     }
 
@@ -98,8 +98,8 @@ public class OrderInterfaceTests extends AbstractTest {
     public void getOrders() {
         final Map<String, List<Order>> result = this.controller.getOrders();
 
-        Mockito.verify(this.orderBook).getBuyOrders();
-        Mockito.verify(this.orderBook).getSellOrders();
+        Mockito.verify(this.matchingEngine).getBuyOrders();
+        Mockito.verify(this.matchingEngine).getSellOrders();
 
         assertTrue(result.containsKey("buy"));
         assertTrue(result.containsKey("sell"));
@@ -124,7 +124,7 @@ public class OrderInterfaceTests extends AbstractTest {
     @DisplayName("Add an order")
     public void addOrder() {
         final List<Trade> trades = new ArrayList<Trade>();
-        Mockito.when(this.orderBook.process(Mockito.any())).thenReturn(trades);
+        Mockito.when(this.matchingEngine.placeOrder(Mockito.any())).thenReturn(trades);
 
         final Map<String, Object> result = this.controller.addOrder(this.side,
                 this.amt, this.price);
@@ -145,7 +145,7 @@ public class OrderInterfaceTests extends AbstractTest {
                 this.add(null);
             }
         };
-        Mockito.when(this.orderBook.process(Mockito.any())).thenReturn(trades);
+        Mockito.when(this.matchingEngine.placeOrder(Mockito.any())).thenReturn(trades);
 
         this.controller.addOrder(this.side, this.amt, this.price);
 
@@ -165,7 +165,7 @@ public class OrderInterfaceTests extends AbstractTest {
     @DisplayName("Delete an order")
     public void deleteOrder() {
 
-        Mockito.when(this.orderBook.cancelOrder(this.id, this.side))
+        Mockito.when(this.matchingEngine.cancelOrder(this.id, this.side))
                 .thenReturn(true);
 
         final Map<String, Object> result = this.controller.deleteOrder(this.id,
@@ -173,7 +173,7 @@ public class OrderInterfaceTests extends AbstractTest {
 
         assertTrue((boolean) result.get("order_deleted"));
 
-        Mockito.verify(this.orderBook).cancelOrder(this.id, this.side);
+        Mockito.verify(this.matchingEngine).cancelOrder(this.id, this.side);
     }
 
     /**

@@ -16,11 +16,11 @@ import org.mockito.InjectMocks;
 public class SpreadTests extends MatchingEngineTest {
 
     /**
-     * Order book.
+     * Matching engine.
      */
     @InjectMocks
     @Resource
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     @Test
     @DisplayName("Get the spread when there are two orders")
@@ -30,11 +30,11 @@ public class SpreadTests extends MatchingEngineTest {
                         .withId("sellOrder").build(),
                 new Order.Builder(Side.BUY).withAmount(2).atPrice(2)
                         .withId("buyOrder").build() };
-        this.addOrders(this.orderBook, orders);
+        this.addOrders(this.matchingEngine, orders);
 
         final double expectedSpread = 0.5;
 
-        assertEquals(expectedSpread, this.orderBook.getSpread());
+        assertEquals(expectedSpread, this.matchingEngine.getSpread());
     }
 
     @Test
@@ -49,17 +49,17 @@ public class SpreadTests extends MatchingEngineTest {
                         .withId("buyOrder").build(),
                 new Order.Builder(Side.BUY).withAmount(2).atPrice(1.5)
                         .withId("secondBuyOrder").build() };
-        this.addOrders(this.orderBook, orders);
+        this.addOrders(this.matchingEngine, orders);
 
         final double expectedSpread = 0.5;
 
-        assertEquals(expectedSpread, this.orderBook.getSpread());
+        assertEquals(expectedSpread, this.matchingEngine.getSpread());
     }
 
     @Test
     @DisplayName("Attempt to get the spread when there are no orders")
     void spreadNoOrders() {
-        assertEquals(this.orderBook.getSpread(), 0);
+        assertEquals(this.matchingEngine.getSpread(), 0);
     }
 
 }

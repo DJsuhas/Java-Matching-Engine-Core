@@ -17,11 +17,11 @@ import org.mockito.InjectMocks;
 public class CancelOrderTests extends MatchingEngineTest {
 
     /**
-     * Order book.
+     * Matching engine.
      */
     @InjectMocks
     @Resource
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     /**
      * Attempt to cancel an order that doesn't exist.
@@ -30,8 +30,8 @@ public class CancelOrderTests extends MatchingEngineTest {
     @Test
     @DisplayName("Attempt to cancel an order that doesn't exist")
     public void cancelNoCancellation() {
-        assertEquals(this.orderBook.cancelOrder("test", Side.BUY), false);
-        assertEquals(this.orderBook.cancelOrder("test", Side.SELL), false);
+        assertEquals(this.matchingEngine.cancelOrder("test", Side.BUY), false);
+        assertEquals(this.matchingEngine.cancelOrder("test", Side.SELL), false);
     }
 
     /**
@@ -51,14 +51,14 @@ public class CancelOrderTests extends MatchingEngineTest {
                 .withAmount(amt).build();
 
         // Process order
-        this.orderBook.process(order);
+        this.matchingEngine.process(order);
 
         // Assert only 1 order in book.
-        assertEquals(this.orderBook.getBuyOrders().size(), 1);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 1);
 
         // Cancel order
-        assertEquals(this.orderBook.cancelOrder(order.getId(), side), true);
-        assertEquals(this.orderBook.getBuyOrders().size(), 0);
+        assertEquals(this.matchingEngine.cancelOrder(order.getId(), side), true);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 0);
     }
 
     /**
@@ -77,14 +77,14 @@ public class CancelOrderTests extends MatchingEngineTest {
                 .withAmount(amt).build();
 
         // Process order
-        this.orderBook.process(order);
+        this.matchingEngine.process(order);
 
         // Assert only 1 order in book.
-        assertEquals(this.orderBook.getBuyOrders().size(), 1);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 1);
 
         // Cancel order
-        assertEquals(this.orderBook.cancelOrder(order.getId(), side), true);
-        assertEquals(this.orderBook.getBuyOrders().size(), 0);
+        assertEquals(this.matchingEngine.cancelOrder(order.getId(), side), true);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 0);
     }
 
     /**
@@ -103,14 +103,14 @@ public class CancelOrderTests extends MatchingEngineTest {
                 .withAmount(amt).build();
 
         // Process order
-        this.orderBook.process(order);
+        this.matchingEngine.process(order);
 
         // Assert only 1 order in book.
-        assertEquals(this.orderBook.getSellOrders().size(), 1);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 1);
 
         // Cancel order
-        assertEquals(this.orderBook.cancelOrder(order.getId(), side), true);
-        assertEquals(this.orderBook.getSellOrders().size(), 0);
+        assertEquals(this.matchingEngine.cancelOrder(order.getId(), side), true);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 0);
     }
 
     /**
@@ -128,13 +128,13 @@ public class CancelOrderTests extends MatchingEngineTest {
                 .withAmount(amt).build();
 
         // Process order
-        this.orderBook.process(order);
+        this.matchingEngine.process(order);
 
         // Assert only 1 order in book.
-        assertEquals(this.orderBook.getSellOrders().size(), 1);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 1);
 
         // Cancel order
-        assertEquals(this.orderBook.cancelOrder(order.getId(), side), true);
-        assertEquals(this.orderBook.getSellOrders().size(), 0);
+        assertEquals(this.matchingEngine.cancelOrder(order.getId(), side), true);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 0);
     }
 }

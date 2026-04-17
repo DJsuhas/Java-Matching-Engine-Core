@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 
 /**
- * Order book tests.
+ * Matching engine tests.
  *
  * @author Laffini
  *
  */
-public class OrderBookTests extends MatchingEngineTest {
+public class MatchingEngineTests extends MatchingEngineTest {
 
     /**
      * Test amount.
@@ -40,11 +40,11 @@ public class OrderBookTests extends MatchingEngineTest {
                     .atPrice(this.price).build() };
 
     /**
-     * Test OrderBook.
+     * Test MatchingEngine.
      */
     @InjectMocks
     @Resource
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     /**
      * Add a buy order, then add a matching sell order.
@@ -54,20 +54,20 @@ public class OrderBookTests extends MatchingEngineTest {
     public void buyThenSell() {
 
         // Add buy order
-        this.orderBook.process(this.orders[0]);
+        this.matchingEngine.placeOrder(this.orders[0]);
 
         // There should only be 1 buy order.
-        assertEquals(this.orderBook.getBuyOrders().size(), 1);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 1);
 
         // There should not be any sell orders
-        assertEquals(this.orderBook.getSellOrders().size(), 0);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 0);
 
         // Add sell order
-        final List<Trade> trades = this.orderBook.process(this.orders[1]);
+        final List<Trade> trades = this.matchingEngine.placeOrder(this.orders[1]);
 
         // There should not be any buy or sell orders
-        assertEquals(this.orderBook.getSellOrders().size(), 0);
-        assertEquals(this.orderBook.getBuyOrders().size(), 0);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 0);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 0);
 
         // There should be only 1 trade
         assertEquals(trades.size(), 1);
@@ -78,7 +78,7 @@ public class OrderBookTests extends MatchingEngineTest {
         assertEquals(trade.getAmount(), this.orders[1].getAmount());
 
         // Assert last trade price
-        assertEquals(this.orderBook.getLastSalePrice(), 2);
+        assertEquals(this.matchingEngine.getLastSalePrice(), 2);
     }
 
     /**
@@ -89,20 +89,20 @@ public class OrderBookTests extends MatchingEngineTest {
     public void sellThenBuy() {
 
         // Add sell order
-        this.orderBook.process(this.orders[1]);
+        this.matchingEngine.placeOrder(this.orders[1]);
 
         // There should only be 1 sell order.
-        assertEquals(this.orderBook.getSellOrders().size(), 1);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 1);
 
         // There should not be any buy orders
-        assertEquals(this.orderBook.getBuyOrders().size(), 0);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 0);
 
         // Add buy order
-        final List<Trade> trades = this.orderBook.process(this.orders[0]);
+        final List<Trade> trades = this.matchingEngine.placeOrder(this.orders[0]);
 
         // There should not be any buy or sell orders
-        assertEquals(this.orderBook.getSellOrders().size(), 0);
-        assertEquals(this.orderBook.getBuyOrders().size(), 0);
+        assertEquals(this.matchingEngine.getSellOrders().size(), 0);
+        assertEquals(this.matchingEngine.getBuyOrders().size(), 0);
 
         // There should be only 1 trade
         assertEquals(trades.size(), 1);
@@ -113,7 +113,7 @@ public class OrderBookTests extends MatchingEngineTest {
         assertEquals(trade.getAmount(), this.orders[0].getAmount());
 
         // Assert last trade price
-        assertEquals(this.orderBook.getLastSalePrice(), 2);
+        assertEquals(this.matchingEngine.getLastSalePrice(), 2);
     }
 
     /**
@@ -124,23 +124,23 @@ public class OrderBookTests extends MatchingEngineTest {
     public void findOrder() {
 
         // Can't find an order that hasn't been added to the book.
-        assertEquals(this.orderBook.findOrder(this.orders[1].getId(),
+        assertEquals(this.matchingEngine.findOrder(this.orders[1].getId(),
                 this.orders[1].getSide()), null);
-        assertEquals(this.orderBook.findOrder(this.orders[0].getId(),
+        assertEquals(this.matchingEngine.findOrder(this.orders[0].getId(),
                 this.orders[0].getSide()), null);
 
         // Add sell order
-        this.orderBook.process(this.orders[1]);
+        this.matchingEngine.placeOrder(this.orders[1]);
 
         // Can find the order now.
-        assertEquals(this.orderBook.findOrder(this.orders[1].getId(),
+        assertEquals(this.matchingEngine.findOrder(this.orders[1].getId(),
                 this.orders[1].getSide()), this.orders[1]);
 
         // Add & find buy order.
-        this.orderBook.process(this.orders[0]);
+        this.matchingEngine.placeOrder(this.orders[0]);
         // Add twice as first is matched with previous sell.
-        this.orderBook.process(this.orders[0]);
-        assertEquals(this.orderBook.findOrder(this.orders[0].getId(),
+        this.matchingEngine.placeOrder(this.orders[0]);
+        assertEquals(this.matchingEngine.findOrder(this.orders[0].getId(),
                 this.orders[0].getSide()), this.orders[0]);
     }
 
@@ -153,7 +153,7 @@ public class OrderBookTests extends MatchingEngineTest {
 
         final String orderId = "";
 
-        final boolean result = this.orderBook.cancelOrder(orderId, null);
+        final boolean result = this.matchingEngine.cancelOrder(orderId, null);
         assertFalse(result);
     }
 
@@ -165,22 +165,22 @@ public class OrderBookTests extends MatchingEngineTest {
     public void buyPartialFill() {
 
         // Add two sell orders.
-        this.orderBook.process(this.orders[1]);
-        this.orderBook.process(this.orders[1]);
+        this.matchingEngine.placeOrder(this.orders[1]);
+        this.matchingEngine.placeOrder(this.orders[1]);
 
         // Modify buy order to be twice the amount.
         final Order buyOrder = this.orders[0];
         buyOrder.setAmount(buyOrder.getAmount() * 2);
 
         // Add the buy order.
-        final List<Trade> trades = this.orderBook.process(buyOrder);
+        final List<Trade> trades = this.matchingEngine.placeOrder(buyOrder);
 
         // Two trades should have taken place.
         assertTrue(trades.size() == 2);
 
         // Order book should be empty.
-        assertTrue(this.orderBook.getBuyOrders().isEmpty());
-        assertTrue(this.orderBook.getSellOrders().isEmpty());
+        assertTrue(this.matchingEngine.getBuyOrders().isEmpty());
+        assertTrue(this.matchingEngine.getSellOrders().isEmpty());
 
         // The trades match the expected amt and price.
         for (final Trade trade : trades) {
@@ -197,22 +197,22 @@ public class OrderBookTests extends MatchingEngineTest {
     public void sellPartialFill() {
 
         // Add two buy orders.
-        this.orderBook.process(this.orders[0]);
-        this.orderBook.process(this.orders[0]);
+        this.matchingEngine.placeOrder(this.orders[0]);
+        this.matchingEngine.placeOrder(this.orders[0]);
 
         // Modify sell order to be twice the amount.
         final Order sellOrder = this.orders[1];
         sellOrder.setAmount(sellOrder.getAmount() * 2);
 
         // Add the buy order.
-        final List<Trade> trades = this.orderBook.process(sellOrder);
+        final List<Trade> trades = this.matchingEngine.placeOrder(sellOrder);
 
         // Two trades should have taken place.
         assertTrue(trades.size() == 2);
 
         // Order book should be empty.
-        assertTrue(this.orderBook.getBuyOrders().isEmpty());
-        assertTrue(this.orderBook.getSellOrders().isEmpty());
+        assertTrue(this.matchingEngine.getBuyOrders().isEmpty());
+        assertTrue(this.matchingEngine.getSellOrders().isEmpty());
 
         // The trades match the expected amt and price.
         for (final Trade trade : trades) {

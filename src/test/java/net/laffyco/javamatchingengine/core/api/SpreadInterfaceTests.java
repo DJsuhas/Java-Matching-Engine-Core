@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
-import net.laffyco.javamatchingengine.core.engine.OrderBook;
+import net.laffyco.javamatchingengine.core.engine.MatchingEngine;
 import test.utils.AbstractTest;
 
 /**
@@ -22,10 +22,10 @@ import test.utils.AbstractTest;
 public class SpreadInterfaceTests extends AbstractTest {
 
     /**
-     * Mock order book.
+     * Mock matching engine.
      */
     @Mock
-    private OrderBook orderBook;
+    private MatchingEngine matchingEngine;
 
     /**
      * Controller under test.
@@ -46,7 +46,7 @@ public class SpreadInterfaceTests extends AbstractTest {
     @DisplayName("Get the spread")
     public void getSpread() {
         final double spread = 3.0;
-        Mockito.when(this.orderBook.getSpread()).thenReturn(spread);
+        Mockito.when(this.matchingEngine.getSpread()).thenReturn(spread);
         final Map<String, Double> result = this.controller.getSpread();
         assertEquals(spread, result.get("spread"));
     }
